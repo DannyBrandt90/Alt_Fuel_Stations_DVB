@@ -5,7 +5,15 @@
     <%= form_for :user, url: users_path do |f|%>
         <%= f.label :name %><br>
         <%= f.text_field :name, required: true%><br>
-    
+       
+        <%= f.label :state %><br>
+        <%= @user.errors.full_messages_for(:state)[0] if @user.errors.any? %>
+        <%= f.select :state, options_for_select(state_selection, params[:state]), {}%><br>
+
+        <%= f.label :city %><br>
+        <%= @user.errors.full_messages_for(:city)[0] if @user.errors.any? %>
+        <%= f.text_field :city, required: true %><br>
+
         <%= f.label :zip %><br>
         <%= @user.errors.full_messages_for(:zip)[0] if @user.errors.any? %>
         <%= f.text_field :zip, required: true %><br>
@@ -21,6 +29,6 @@
     </div>
     <%end%>
     <div class='buttons'>
-        <%= button_to "Login with GitHub", '/auth/github', class: 'btn' %>
+        <%= button_to "Login with GitHub", '/auth/github', class: 'btn btn-warning' %>
     </div>
 </div>

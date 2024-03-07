@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_05_13_170514) do
+ActiveRecord::Schema.define(version: 2024_02_20_224235) do
 
   create_table "notes", force: :cascade do |t|
     t.text "content"
@@ -51,6 +51,8 @@ ActiveRecord::Schema.define(version: 2021_05_13_170514) do
     t.string "state"
     t.integer "api_id"
     t.string "phone", default: "N/A"
+    t.string "fuel_type_code"
+    t.text "outlets"
   end
 
   create_table "users", force: :cascade do |t|
@@ -58,17 +60,20 @@ ActiveRecord::Schema.define(version: 2021_05_13_170514) do
     t.string "email"
     t.string "password_digest"
     t.string "zip"
-    t.boolean "BD", default: false
-    t.boolean "CNG", default: false
+    t.boolean "BD", default: true
+    t.boolean "CNG", default: true
     t.boolean "ELEC", default: true
-    t.boolean "E85", default: false
-    t.boolean "HY", default: false
-    t.boolean "LNG", default: false
-    t.boolean "LPG", default: false
+    t.boolean "E85", default: true
+    t.boolean "HY", default: true
+    t.boolean "LNG", default: true
+    t.boolean "LPG", default: true
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "uid"
     t.string "provider"
+    t.string "city"
+    t.string "state"
+    t.text "users_fuels"
   end
 
   create_table "users_stations", force: :cascade do |t|
@@ -76,7 +81,7 @@ ActiveRecord::Schema.define(version: 2021_05_13_170514) do
     t.integer "station_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.string "date_visited"
+    t.string "outlet_type"
     t.index ["station_id"], name: "index_users_stations_on_station_id"
     t.index ["user_id"], name: "index_users_stations_on_user_id"
   end

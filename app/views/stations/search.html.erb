@@ -18,7 +18,8 @@
               <%= "#{s.address}, #{s.city}, #{s.state}, #{s.zip}" %>
           </td>
           <td>
-              <%= s.access %>
+              <%= s.access %><br>
+              <%= s.fuel_type_code %>
           </td>
           <td>
              <%= link_to "Show #{s.name}", station_path(s)%>

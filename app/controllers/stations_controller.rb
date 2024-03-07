@@ -1,6 +1,5 @@
-require_relative './api_controller.rb'
-
 class StationsController < ApplicationController
+    include StationNotifier
 
     def index
         @user = current_user
@@ -19,9 +18,72 @@ class StationsController < ApplicationController
 
     def residential
         @user = current_user
-        @stations =  Station.where(zip: @user.zip).residential
+        stations =  Station.residential
+        @stations =[]
+        stations.each do |s|
+            if @user.check_settings(s)
+                @stations << s
+            end
+        end
         @message = "Displaying Residential Stations in #{@user.zip}"
         render '/users/show'
+    end
+
+    def filter_by_zip
+        @user = current_user
+        stations =  Station.users_zip(@user.zip)
+        @stations =[]
+        stations.each do |s|
+            if @user.check_settings(s)
+                @stations << s
+            end
+        end
+        @message = "Displaying #{@stations.count} Stations in your Zip: #{@user.zip}"
+        render '/users/show'
+    end
+
+    def filter_by_city
+        @user = current_user
+        stations =  Station.users_city(@user.city, @user.state)
+        @stations =[]
+        stations.each do |s|
+            if @user.check_settings(s)
+                @stations << s
+            end
+        end
+        @message = "Displaying #{@stations.count} Stations in your City: #{@user.city}"
+        render '/users/show'
+    end
+
+    def filter_by_state
+        @user = current_user
+        stations =  Station.users_state(@user.state)
+        @stations =[]
+        stations.each do |s|
+            if @user.check_settings(s)
+                @stations << s
+            end
+        end
+        @message = "Displaying #{@stations.count} Stations in your State: #{@user.state}"
+        render '/users/show'
+    end
+
+    def filter
+        options = 
+        {
+            'residential' => method(:residential),
+            'filter_by_zip' => method(:filter_by_zip),
+            'filter_by_city' => method(:filter_by_city),
+            'filter_by_state' => method(:filter_by_state)
+        }
+
+        if params[:filter].blank?
+            options['filter_by_city'].call
+        elsif options[params[:filter]].nil?
+            options['filter_by_city'].call
+        else
+            options[params[:filter]].call
+        end
     end
 
     def new
@@ -29,7 +91,8 @@ class StationsController < ApplicationController
     end
 
     def create
-        @station = current_user.stations.build(
+        @user = current_user
+        @station = @user.stations.build(
             name: params[:station][:name],
             city: params[:station][:city],
             state: params[:station][:state],
@@ -37,70 +100,68 @@ class StationsController < ApplicationController
             address: params[:station][:address],
             phone: params[:station][:phone],
             ELEC: true,
+            outlets: [params[:station][:outlets]],
             status: "Pending Approval",
             access: "residential",
+            fuel_type_code: "ELEC",
             flagged: true,
             updates: false
         )
+
+        @stations = @user.stations
         
         if @station.save
-            redirect_to user_path(current_user)
+            render '/users/users_stations'
         else    
            render :new
         end
     end
 
     def search
-        @stations = ApiController.create_station_objects(params[:zip], ApiController.get_stations_from_zip(params[:zip]))
-        render '/stations/search'
+        if Station.where(zip: params[:zip])
+            @stations = Station.where(zip: params[:zip])
+        else
+            @stations = ApiController.create_station_objects(params[:zip], ApiController.get_stations_from_zip(params[:zip]))
+            render '/stations/search'
+    
+        end
     end
 
     def check_for_updates
-        #use ['id'] for new_stations, and api_id for stations in the DB
         user = current_user
         current_stations = Station.where(zip: user.zip)
         new_stations = ApiController.get_stations_from_zip(user.zip)
     
         if current_stations.count != new_stations.count
-            #station in our DB no longer in API
             if new_stations.count < current_stations.count
                 current_stations.each do |station|
-                    
-                    if !new_stations.select{|s| s['id'] == station.api_id}.any?
-
+                    if !new_stations.select { |s| s['id'] == station.api_id }.any?
                         if station.access == "residential"
-
                             if station.flagged
                                 @message = "#{station.name} Residential Station, is pending approval for public use."
                             else
-                                @message = "#{station.name} Residential Staition, is availible for public use!"
+                                @message = "#{station.name} Residential Station, is available for public use!"
                             end
-                            render "/stations/check_for_updates"
-                            
                         else
                             @message = "#{station.name}, has been removed."
                             station.destroy
-                            render "/stations/check_for_updates"
                         end
                     end
-
                 end
-            #new station found in API
             elsif new_stations.count > current_stations.count
                 new_stations.each do |station|
-                    
                     if current_stations.find_by(api_id: station['id']).nil?
                         @message = "#{station['station_name']}, has been added in your area!."
                         ApiController.create_station(station)
-                        render "/stations/check_for_updates"
                     end
-
                 end
             end
         else
             @message = "No updates in your home zip."
-            render "/stations/check_for_updates"
         end
+    
+        render "/stations/check_for_updates"
     end
+    
 
 end

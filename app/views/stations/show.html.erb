@@ -1,4 +1,4 @@
-<h3><%= @user_count %> users have this station saved</h3>
+<h3><%= @user_count %> users are watching this station</h3>
 
 <div id='card_container'>
 
@@ -7,22 +7,32 @@
    <p>City: <%= @station.city %></p>
    <p>State: <%= @station.state %></p>
    <p>Zip: <%= @station.zip %></p>
-   <p>Status: <%= @station.status %></p><br>
+   <p>Status: <%= @station.status %></p>
    <p>Phone Number: <%= @station.phone %></p>
+   <p>Fuel Type: <%= @station.fuel_type_code %></p>
+   <% if !@station.outlets.empty?%>
+      <div>Outlet Types: 
+         <% @station.outlets.each do |type| %>
+            <%= type %>
+         <%end%>
+      </div><br>
+   <% end %>
 
    <p>Notes:</p>
    <ul id='notes'>
    <% @station_notes.each do |n| %>
         <li>
         <div class='note'>
-            <p> <%= n.content %> </p>
-            <% if n.user ==  @user %>
-               <%= button_to 'remove', station_note_path(@station.id, n.id), method: 'delete', id:'remove_note' %>
-               <% else %>
-               <%= "created by: #{n.user.name}" %>
-            <% end %>
+            <p> 
+               <%="posted: #{n.created_at.strftime('%m/%d/%y')}"%>
+               <% if n.user ==  @user %>
+                  <%= button_to 'remove', station_note_path(@station.id, n.id), method: 'delete', id:'remove_note', class: 'btn btn-danger' %>
+               <% end %>
+            </p><br>
+            <%= n.content %>
          </div>
         </li>
+        <hr>
    <% end %>
    </ul>
    

@@ -10,6 +10,13 @@ module ApiController
         data["fuel_stations"]
     end
 
+    def self.get_stations_from_state(state)
+        url = "https://developer.nrel.gov/api/alt-fuel-stations/v1.json?state=#{state}&api_key=#{ENV['API_KEY']}"
+        doc = HTTParty.get(url)
+        data = doc.parsed_response
+        data["fuel_stations"]
+    end
+
     def self.create_station(station)
         if !station.nil?
             name = station["station_name"]
@@ -44,6 +51,8 @@ module ApiController
                     access: access, 
                     api_id: api_id, 
                     phone: phone,
+                    fuel_type_code: fuel_type_code,
+                    outlets: outlets
                 )
                 
                 #set outlets and fuel types for station
@@ -67,16 +76,25 @@ module ApiController
         end
     end
 
-    def self.create_station_objects(zip, method)
+    def self.create_station_objects(state, method)
         #ONLY make api call if user and DB don't have station already
-        if Station.find_by(zip: zip, access: 'private').nil? && Station.find_by(zip: zip, access: 'public').nil?
+        # if Station.find_by(zip: zip, access: 'private').nil? && Station.find_by(zip: zip, access: 'public').nil?
+        #     method.each do |station|
+        #         ApiController.create_station(station)
+        #     end 
+        #     stations = Station.where(zip: zip)
+        # #add station from DB if user doesn't have
+        # else 
+        #     stations = Station.where(zip: zip)
+        # end
+        if Station.find_by(state: state, access: 'private').nil? && Station.find_by(state: state, access: 'public').nil?
             method.each do |station|
                 ApiController.create_station(station)
             end 
-            stations = Station.where(zip: zip)
+            stations = Station.where(state: state)
         #add station from DB if user doesn't have
         else 
-            stations = Station.where(zip: zip)
+            stations = Station.where(state: state)
         end
         stations
     end
